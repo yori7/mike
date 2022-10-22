@@ -5,12 +5,29 @@
 <?import javafx.scene.layout.VBox?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
 <VBox alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.github.yorinana.mike.MikeController">
     <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
     </padding>
-
-    <Label fx:id="welcomeText"/>
-    <Button text="Hello!" onAction="#onHelloButtonClick"/>
+    <HBox alignment="CENTER" minHeight="0.0" minWidth="0.0" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS" spacing="5.0">
+        <VBox fx:id="canvas" alignment="CENTER" minHeight="0.0" minWidth="0.0" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
+            <ImageView fx:id="imageView" preserveRatio="true" />
+        </VBox>
+        <VBox fx:id="canvas2" alignment="CENTER" minHeight="0.0" minWidth="0.0" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
+            <ImageView fx:id="imageView2" preserveRatio="true" />
+        </VBox>
+    </HBox>
+    <VBox alignment="CENTER">
+        <Label fx:id="statusText" />
+    </VBox>
+    <HBox alignment="CENTER" spacing="5.0">
+        <padding>
+            <Insets left="20" right="20" />
+        </padding>
+        <Button alignment="BOTTOM_LEFT" onAction="#onOpenButtonClick" text="Open" textAlignment="CENTER" />
+        <Button alignment="BOTTOM_RIGHT" onAction="#onSaveButtonClick" text="Save" textAlignment="CENTER" />
+    </HBox>
 </VBox>
