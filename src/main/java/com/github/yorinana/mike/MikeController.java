@@ -98,9 +98,9 @@ public class MikeController {
     }
 
     protected void binalize(BufferedImage img) {
-        img = flatField(img);
-        img = kmeans(img, 3);
-        image2 = SwingFXUtils.toFXImage(img, null);
+        BufferedImage flatImg = flatField(img);
+        BufferedImage[] sepImg = kmeans(flatImg, 3);
+        image2 = SwingFXUtils.toFXImage(sepImg[0], null);
     }
 
     protected BufferedImage flatField(BufferedImage img) {
@@ -126,8 +126,7 @@ public class MikeController {
     }
 
     protected BufferedImage gausian(BufferedImage img, int size) {
-        BufferedImage newImg = new BufferedImage((int)img.getWidth(), (int)img.getHeight(), BufferedImage.TYPE_INT_RGB);
-        int[] ave = average(img);
+        BufferedImage newImg = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
         int num = (size * 2 + 1) * (size * 2 + 1);
         for (int x = 0; x < img.getWidth(); x++) {
             for (int y = 0; y < img.getHeight(); y++) {
@@ -136,7 +135,7 @@ public class MikeController {
                 for (int xAround = -size; xAround <= size; xAround++) {
                     for (int yAround = -size; yAround <= size; yAround++) {
                         int[] rgbAround;
-                        if ((x < 0) | (y < 0)) {
+                        if ((xAround < 0) | (yAround < 0)) {
                             numxy -= 1;
                         } else {
                             rgbAround = getRGB(img, xAround, yAround);
@@ -181,7 +180,7 @@ public class MikeController {
         return new int[]{r, g, b};
     }
 
-    protected BufferedImage kmeans(BufferedImage img, int numClusters) {
+    protected BufferedImage[] kmeans(BufferedImage img, int numClusters) {
         final int w = img.getWidth();
         final int h = img.getHeight();
         final int numPx = w * h;
@@ -215,7 +214,6 @@ public class MikeController {
         final int maxIter = 30;
         final int maxD = 256;
         int[] labels = new int[numPx];
-        int[] numEachLabels = new int[numClusters];
         for (int iter = 0;; iter++) {
             // Update labels
             for (int x = 0; x < w; x++) {
@@ -230,7 +228,6 @@ public class MikeController {
                             labels[x + y * w] = i;
                         }
                     }
-                    numEachLabels[labels[x + y * w]] += 1;
                 }
             }
             if (iter == maxIter) {
@@ -238,12 +235,50 @@ public class MikeController {
             }
 
             // Update barycenters
+            Arrays.fill(barycenters, new float[]{0, 0, 0});
+            int[] numEachLabels = new int[numClusters];
+            for (int i = 0; i < numPx; i++) {
+                int[] rgb = getRGB(img, i % h, i / h);
+                int label = labels[i];
+                numEachLabels[label]++;
+                for (int c = 0; c < 3; c++) {
+                    barycenters[label][c] += rgb[c];
+                }
+            }
+            for (int i = 0; i < numClusters; i++) {
+                for (int c = 0; c < 3; c++) {
+                    barycenters[i][c] /= numEachLabels[i];
+                }
+            }
         }
-        return img;
+        BufferedImage[] res = new BufferedImage[numClusters];
+        for (int i = 0; i < h; i++) {
+            for (int j = 0; j < numClusters; j++) {
+                if (j == labels[i]) {
+                    res[j].setRGB(i%h, i/h, 0x000000);
+                } else {
+                    res[j].setRGB(i%h, i/h, 0xffffff);
+                }
+            }
+        }
+        return res;
     }
     
     protected int weightedRandom(float[] weight) {
-        return 0;
+        float sumWeight = 0;
+        for (float v : weight) {
+            sumWeight += v;
+        }
+        Random rand = new Random();
+        float val = rand.nextFloat(sumWeight);
+        sumWeight = 0;
+        for (int i = 0; i < weight.length; i++) {
+            sumWeight += weight[i];
+            if (val < sumWeight) {
+                return i;
+            }
+        }
+        return weight.length - 1;
     }
     
     protected float getDistance(int[] a, int[] b) {
@@ -277,6 +312,6 @@ public class MikeController {
         for (int c = 0; c < 3; c++) {
             d2 += Math.pow(a[c] - b[c], 2);
         }
-        return Math.sqrt(d2);
+        return (float)Math.sqrt(d2);
     }
 }
