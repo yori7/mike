@@ -86,7 +86,7 @@ public class MikeController {
                     BufferedImage.TYPE_INT_ARGB
             );
             SwingFXUtils.fromFXImage(image, bufImage);
-            binalize(bufImage);
+            applyAction(bufImage);
             imageView2.setImage(image2);
         }
     }
@@ -97,28 +97,30 @@ public class MikeController {
         return ext.toLowerCase();
     }
 
-    protected void binalize(BufferedImage img) {
+    protected void applyAction(BufferedImage img) {
         BufferedImage flatImg = flatField(img);
-        BufferedImage[] sepImg = kmeans(flatImg, 3);
-        image2 = SwingFXUtils.toFXImage(sepImg[0], null);
+        // BufferedImage[] sepImg = kmeans(flatImg, 3);
+        image2 = SwingFXUtils.toFXImage(flatImg, null);
     }
 
     protected BufferedImage flatField(BufferedImage img) {
-        BufferedImage newImg = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
-        int size = (int)Math.sqrt(img.getHeight() * img.getWidth() * 0.05);
+        int w = img.getWidth();
+        int h = img.getHeight();
+        BufferedImage newImg = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        int size = (int)Math.sqrt(h * w * 0.05);
         BufferedImage gausianImg = gausian(img, size);
         int[] ave = average(img);
-        for (int x = 0; x < img.getWidth(); x++) {
-            for (int y = 0; y < img.getHeight(); y++) {
+        for (int x = 0; x < w; x++) {
+            for (int y = 0; y < h; y++) {
                 int[] rgb = getRGB(img, x, y);
                 int[] gausianRGB = getRGB(gausianImg, x, y);
-                for (int i = 0; i < 3; i++) {
-                    rgb[i] = rgb[i] / gausianRGB[i] * ave[i];
+                for (int c = 0; c < 3; c++) {
+                    rgb[c] = ((rgb[c]+1) / (gausianRGB[c]+1)) * ave[c];
                 }
                 int newR = (rgb[0] << 16) & 0xff0000;
                 int newG = (rgb[1] << 8) & 0x00ff00;
-                int newB = rgb[2] & 0x0000ff;
-                int newRGB = newR & newG & newB;
+                int newB = (rgb[2] << 0) & 0x0000ff;
+                int newRGB = newR | newG | newB;
                 newImg.setRGB(x, y, newRGB);
             }
         }
@@ -126,10 +128,12 @@ public class MikeController {
     }
 
     protected BufferedImage gausian(BufferedImage img, int size) {
-        BufferedImage newImg = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
+        int w = img.getWidth();
+        int h = img.getHeight();
+        BufferedImage newImg = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
         int num = (size * 2 + 1) * (size * 2 + 1);
-        for (int x = 0; x < img.getWidth(); x++) {
-            for (int y = 0; y < img.getHeight(); y++) {
+        for (int x = 0; x < w; x++) {
+            for (int y = 0; y < h; y++) {
                 int[] rgb = new int[]{0, 0, 0};
                 int numxy = num;
                 for (int xAround = -size; xAround <= size; xAround++) {
@@ -156,16 +160,18 @@ public class MikeController {
     }
 
     protected int[] average(BufferedImage img) {
+        int w = img.getWidth();
+        int h = img.getHeight();
         int[] rgb = new int[3];
-        for (int x = 0; x < img.getWidth(); x++) {
-            for (int y = 0; y < img.getHeight(); y++) {
+        for (int x = 0; x < w; x++) {
+            for (int y = 0; y < h; y++) {
                 int[] rgbxy = getRGB(img, x, y);
-                for (int i = 0; i < 3; i++) {
-                    rgb[i] += rgbxy[i];
+                for (int c = 0; c < 3; c++) {
+                    rgb[c] += rgbxy[c];
                 }
             }
         }
-        int numPixel = img.getWidth() * img.getHeight();
+        int numPixel = w * h;
         for (int i = 0; i < 3; i++) {
             rgb[i] /= numPixel;
         }
@@ -247,7 +253,9 @@ public class MikeController {
             }
             for (int i = 0; i < numClusters; i++) {
                 for (int c = 0; c < 3; c++) {
-                    barycenters[i][c] /= numEachLabels[i];
+                    if (numEachLabels[i] != 0) {
+                        barycenters[i][c] /= numEachLabels[i];
+                    }
                 }
             }
         }
