@@ -83,7 +83,7 @@ public class MikeController {
             BufferedImage bufImage = new BufferedImage(
                     (int) image.getWidth(),
                     (int) image.getHeight(),
-                    BufferedImage.TYPE_INT_ARGB
+                    BufferedImage.TYPE_INT_RGB
             );
             SwingFXUtils.fromFXImage(image, bufImage);
             applyAction(bufImage);
@@ -99,35 +99,38 @@ public class MikeController {
 
     protected void applyAction(BufferedImage img) {
         BufferedImage flatImg = flatField(img);
-        // BufferedImage[] sepImg = kmeans(flatImg, 3);
-        image2 = SwingFXUtils.toFXImage(flatImg, null);
+        BufferedImage[] sepImg = kmeans(flatImg, 3);
+        image2 = SwingFXUtils.toFXImage(sepImg[0], null);
     }
 
-    protected BufferedImage flatField(BufferedImage img) {
+    final protected BufferedImage flatField(BufferedImage img) {
         int w = img.getWidth();
         int h = img.getHeight();
         BufferedImage newImg = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
         int size = (int)Math.sqrt(h * w * 0.05);
         BufferedImage gausianImg = gausian(img, size);
         int[] ave = average(img);
+        System.out.println(ave[0]);
+        System.out.println(ave[1]);
+        System.out.println(ave[2]);
         for (int x = 0; x < w; x++) {
             for (int y = 0; y < h; y++) {
                 int[] rgb = getRGB(img, x, y);
                 int[] gausianRGB = getRGB(gausianImg, x, y);
                 for (int c = 0; c < 3; c++) {
-                    rgb[c] = ((rgb[c]+1) / (gausianRGB[c]+1)) * ave[c];
+                    rgb[c] = (int) (((float)(rgb[c]+1) / (float)(gausianRGB[c]+1)) * (float)ave[c]);
                 }
                 int newR = (rgb[0] << 16) & 0xff0000;
                 int newG = (rgb[1] << 8) & 0x00ff00;
                 int newB = (rgb[2] << 0) & 0x0000ff;
-                int newRGB = newR | newG | newB;
+                int newRGB = newR | newG | newB | 0xff000000;
                 newImg.setRGB(x, y, newRGB);
             }
         }
         return newImg;
     }
 
-    protected BufferedImage gausian(BufferedImage img, int size) {
+    final protected BufferedImage gausian(BufferedImage img, int size) {
         int w = img.getWidth();
         int h = img.getHeight();
         BufferedImage newImg = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
@@ -152,14 +155,14 @@ public class MikeController {
                 int newR = ((rgb[0] / numxy) << 16) & 0xff0000;
                 int newG = ((rgb[1] / numxy) << 8) & 0x00ff00;
                 int newB = (rgb[2] / numxy) & 0x0000ff;
-                int newRGB = newR & newG & newB;
+                int newRGB = newR | newG | newB;
                 newImg.setRGB(x, y, newRGB);
             }
         }
         return newImg;
     }
 
-    protected int[] average(BufferedImage img) {
+    final protected int[] average(BufferedImage img) {
         int w = img.getWidth();
         int h = img.getHeight();
         int[] rgb = new int[3];
@@ -178,7 +181,7 @@ public class MikeController {
         return rgb;
     }
 
-    protected int[] getRGB(BufferedImage img, int x, int y) {
+    final protected int[] getRGB(BufferedImage img, int x, int y) {
         int pixel = img.getRGB(x, y);
         int r = pixel >> 16 & 0xff;
         int g = pixel >> 8 & 0xff;
@@ -186,7 +189,7 @@ public class MikeController {
         return new int[]{r, g, b};
     }
 
-    protected BufferedImage[] kmeans(BufferedImage img, int numClusters) {
+    final protected BufferedImage[] kmeans(BufferedImage img, int numClusters) {
         final int w = img.getWidth();
         final int h = img.getHeight();
         final int numPx = w * h;
@@ -272,7 +275,7 @@ public class MikeController {
         return res;
     }
     
-    protected int weightedRandom(float[] weight) {
+    final protected int weightedRandom(float[] weight) {
         float sumWeight = 0;
         for (float v : weight) {
             sumWeight += v;
@@ -289,7 +292,7 @@ public class MikeController {
         return weight.length - 1;
     }
     
-    protected float getDistance(int[] a, int[] b) {
+    final protected float getDistance(int[] a, int[] b) {
         float[] fa = new float[3];
         float[] fb = new float[3];
         for (int c = 0; c < 3; c++) {
@@ -299,7 +302,7 @@ public class MikeController {
         return getDistance(fa, fb);
     }
 
-    protected float getDistance(float[] a, int[] b) {
+    final protected float getDistance(float[] a, int[] b) {
         float[] fb = new float[3];
         for (int c = 0; c < 3; c++) {
             fb[c] = (float)b[c];
@@ -307,7 +310,7 @@ public class MikeController {
         return getDistance(a, fb);
     }
 
-    protected float getDistance(int[] a, float[] b) {
+    final protected float getDistance(int[] a, float[] b) {
         float[] fa = new float[3];
         for (int c = 0; c < 3; c++) {
             fa[c] = (float)a[c];
@@ -315,7 +318,7 @@ public class MikeController {
         return getDistance(fa, b);
     }
 
-    protected float getDistance(float[] a, float[] b) {
+    final protected float getDistance(float[] a, float[] b) {
         float d2 = 0;
         for (int c = 0; c < 3; c++) {
             d2 += Math.pow(a[c] - b[c], 2);
