@@ -28,6 +28,7 @@
             <Insets left="20" right="20" />
         </padding>
         <Button alignment="BOTTOM_LEFT" onAction="#onOpenButtonClick" text="Open" textAlignment="CENTER" />
+        <Button alignment="BOTTOM_CENTER" onAction="#onApplyButtonClick" text="Apply" textAlignment="CENTER" />
         <Button alignment="BOTTOM_RIGHT" onAction="#onSaveButtonClick" text="Save" textAlignment="CENTER" />
     </HBox>
 </VBox>
