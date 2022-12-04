@@ -44,7 +44,6 @@ public class MikeController {
         imageView.fitHeightProperty().bind(canvas.heightProperty());
         imageView.setPreserveRatio(true);
 
-        // test
         image2 = image;
         imageView2.setImage(image2);
         imageView2.fitWidthProperty().bind(canvas2.widthProperty());
@@ -99,65 +98,114 @@ public class MikeController {
 
     protected void applyAction(BufferedImage img) {
         BufferedImage flatImg = flatField(img);
-        BufferedImage[] sepImg = kmeans(flatImg, 3);
-        image2 = SwingFXUtils.toFXImage(sepImg[0], null);
+        // BufferedImage[] sepImg = kmeans(flatImg, 3);
+        image2 = SwingFXUtils.toFXImage(flatImg, null);
     }
 
     final protected BufferedImage flatField(BufferedImage img) {
         int w = img.getWidth();
         int h = img.getHeight();
         BufferedImage newImg = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-        int size = (int)Math.sqrt(h * w * 0.05);
+
+        int size = (int)Math.sqrt(h * w * 0.04);
         BufferedImage gausianImg = gausian(img, size);
-        int[] ave = average(img);
-        System.out.println(ave[0]);
-        System.out.println(ave[1]);
-        System.out.println(ave[2]);
+
+        float[] ave = new float[3];
+        int[] tmpAve = average(img);
+        for (int c = 0; c < 3; c++) {
+            ave[c] = (float)tmpAve[c];
+        }
+
         for (int x = 0; x < w; x++) {
             for (int y = 0; y < h; y++) {
                 int[] rgb = getRGB(img, x, y);
                 int[] gausianRGB = getRGB(gausianImg, x, y);
                 for (int c = 0; c < 3; c++) {
-                    rgb[c] = (int) (((float)(rgb[c]+1) / (float)(gausianRGB[c]+1)) * (float)ave[c]);
+                    rgb[c] = (int) (((float)(rgb[c]+1) / (float)(gausianRGB[c]+1)) * ave[c]);
                 }
                 int newR = (rgb[0] << 16) & 0xff0000;
                 int newG = (rgb[1] << 8) & 0x00ff00;
                 int newB = (rgb[2] << 0) & 0x0000ff;
-                int newRGB = newR | newG | newB | 0xff000000;
+                int newRGB = newR | newG | newB;
                 newImg.setRGB(x, y, newRGB);
             }
         }
-        return newImg;
+        return gausianImg;
     }
 
     final protected BufferedImage gausian(BufferedImage img, int size) {
         int w = img.getWidth();
         int h = img.getHeight();
         BufferedImage newImg = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-        int num = (size * 2 + 1) * (size * 2 + 1);
+        int r, g, b;
+        int[] rgbAround;
+        int[] sumColsR, sumColsG, sumColsB;
+        sumColsR = new int[h];
+        sumColsG = new int[h];
+        sumColsB = new int[h];
         for (int x = 0; x < w; x++) {
-            for (int y = 0; y < h; y++) {
-                int[] rgb = new int[]{0, 0, 0};
-                int numxy = num;
-                for (int xAround = -size; xAround <= size; xAround++) {
-                    for (int yAround = -size; yAround <= size; yAround++) {
-                        int[] rgbAround;
-                        if ((xAround < 0) | (yAround < 0)) {
-                            numxy -= 1;
-                        } else {
-                            rgbAround = getRGB(img, xAround, yAround);
-                            for (int i = 0; i < 3; i++) {
-                                rgb[i] += rgbAround[i];
-                            }
-                        }
-                    }
+            int y = 0;
+            r = 0;
+            g = 0;
+            b = 0;
+            int x0 = (x - size) > 0 ? x - size : 0;
+            int x1 = (x + size) < w ? x + size : w - 1;
+            int curnelW = x1 - x0 + 1;
+
+            int y0 = (y - size) > 0 ? y - size : 0;
+            int y1 = (y + size) < h ? y + size : h - 1;
+            int curnelH = y1 - y0 + 1;
+
+            int num = curnelW * curnelH;
+            for (int yAround = y0; yAround <= y1; yAround++) {
+                for (int xAround = x0; xAround <= x1; xAround++) {
+                    rgbAround = getRGB(img, xAround, yAround);
+                    sumColsR[yAround] += rgbAround[0];
+                    sumColsG[yAround] += rgbAround[1];
+                    sumColsB[yAround] += rgbAround[2];
                 }
-                int newR = ((rgb[0] / numxy) << 16) & 0xff0000;
-                int newG = ((rgb[1] / numxy) << 8) & 0x00ff00;
-                int newB = (rgb[2] / numxy) & 0x0000ff;
-                int newRGB = newR | newG | newB;
+                r += sumColsR[yAround];
+                g += sumColsG[yAround];
+                b += sumColsB[yAround];
+            }
+
+            int newR = ((r / num) << 16);
+            int newG = ((g / num) << 8);
+            int newB = (b / num);
+            int newRGB = newR | newG | newB;
+            newImg.setRGB(x, y, newRGB);
+
+            int beforeCol, nextCol;
+            for (y = 1; y < h; y++) {
+                beforeCol = y - size - 1;
+                if ((beforeCol) >= 0) {
+                    r -= sumColsR[beforeCol];
+                    g -= sumColsG[beforeCol];
+                    b -= sumColsB[beforeCol];
+                    num -= curnelW;
+                }
+                nextCol = y + size;
+                if (nextCol < h) {
+                    for (int xAround = x0; xAround <= x1; xAround++) {
+                        rgbAround = getRGB(img, xAround, nextCol);
+                        sumColsR[nextCol] += rgbAround[0];
+                        sumColsG[nextCol] += rgbAround[1];
+                        sumColsB[nextCol] += rgbAround[2];
+                    }
+                    r += sumColsR[nextCol];
+                    g += sumColsG[nextCol];
+                    b += sumColsB[nextCol];
+                    num += curnelW;
+                }
+                newR = ((r / num) << 16);
+                newG = ((g / num) << 8);
+                newB = (b / num);
+                newRGB = newR | newG | newB;
                 newImg.setRGB(x, y, newRGB);
             }
+            Arrays.fill(sumColsR, 0);
+            Arrays.fill(sumColsG, 0);
+            Arrays.fill(sumColsB, 0);
         }
         return newImg;
     }
@@ -165,6 +213,7 @@ public class MikeController {
     final protected int[] average(BufferedImage img) {
         int w = img.getWidth();
         int h = img.getHeight();
+        int numPixel = w * h;
         int[] rgb = new int[3];
         for (int x = 0; x < w; x++) {
             for (int y = 0; y < h; y++) {
@@ -174,9 +223,8 @@ public class MikeController {
                 }
             }
         }
-        int numPixel = w * h;
-        for (int i = 0; i < 3; i++) {
-            rgb[i] /= numPixel;
+        for (int c = 0; c < 3; c++) {
+            rgb[c] /= numPixel;
         }
         return rgb;
     }
@@ -220,7 +268,7 @@ public class MikeController {
         }
         
         // Learning
-        final int maxIter = 30;
+        final int maxIter = 10;
         final int maxD = 256;
         int[] labels = new int[numPx];
         for (int iter = 0;; iter++) {
