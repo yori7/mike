@@ -1,4 +1,4 @@
-package com.github.yorinana.mike;
+package com.github.yorinana.mike.clustering;
 
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
@@ -10,31 +10,31 @@ public final class Kmeans {
     private float[][] barycenters;
     private static final int dim = 3;
 
-    Kmeans(int k, int maxIter) {
+    public Kmeans(int k, int maxIter) {
         this.k = k;
         this.maxIter = maxIter;
         this.barycenters = new float[k][];
     }
 
-    public void fit(float[][] points) {
-        int length = points.length;
-        init(points, length);
-        learn(points, length);
+    public void fit(float[][] data) {
+        int length = data.length;
+        init(data, length);
+        learn(data, length);
     }
 
-    public void fit(int[][] points) {
-        float[][] floatPoints = iArr2FArr(points);
-        fit(floatPoints);
+    public void fit(int[][] data) {
+        float[][] floatData = iArr2FArr(data);
+        fit(floatData);
     }
 
-    private void init(float[][] points, int length) {
+    private void init(float[][] data, int length) {
         float[] weight = new float[length];
         float[][] barycenters = new float[this.k][dim];
 
         Arrays.fill(weight, 1);
         for (int cluster = 0; ; cluster++) { // decide initial barycenters
             int pos = weightedRandom(weight);
-            float[] tmpRGB = points[pos];
+            float[] tmpRGB = data[pos];
             System.arraycopy(tmpRGB, 0, barycenters[cluster], 0, dim);
 
             if (cluster == this.k-1) {
@@ -46,7 +46,7 @@ public final class Kmeans {
             for (int i = 0; i < cluster+1; i++) {
                 float[] barycenter = barycenters[i];
                 for (pos = 0; pos < length; pos++) {
-                    float[] rgb = points[pos];
+                    float[] rgb = data[pos];
                     float distance = getDistance(rgb, barycenter);
                     weight[pos] = Math.min(weight[pos], distance);
                 }
@@ -95,13 +95,13 @@ public final class Kmeans {
         return res;
     }
 
-    private void learn(float[][] points, int length) {
+    private void learn(float[][] data, int length) {
         // float[][] barycenters = this.barycenters;
 
         int[] labels;
         for (int iter = 0;; iter++) {
             // Update labels
-            labels = predict(points, length);
+            labels = predict(data, length);
 
             if (iter == maxIter) {
                 break;
@@ -113,7 +113,7 @@ public final class Kmeans {
             }
             int[] numEachLabels = new int[this.k];
             for (int pos = 0; pos < length; pos++) {
-                float[] rgb = points[pos];
+                float[] rgb = data[pos];
                 int label = labels[pos];
                 numEachLabels[label]++;
                 for (int c = 0; c < dim; c++) {
@@ -130,12 +130,12 @@ public final class Kmeans {
         }
     }
 
-    public int[] predict(float[][] points, int length) {
+    public int[] predict(float[][] data, int length) {
         int[] labels = new int[length];
         float distance;
         for (int pos = 0; pos < length; pos++) {
             distance = 442; // 442 = distance between (0, 0, 0) and (255, 255, 255)
-            float[] rgb = points[pos];
+            float[] rgb = data[pos];
             for (int cluster = 0; cluster < this.k; cluster++) {
                 float[] barycenter = barycenters[cluster];
                 float d = getDistance(rgb, barycenter);
@@ -148,14 +148,14 @@ public final class Kmeans {
         return labels;
     }
 
-    public int[] predict(float[][] points) {
-        int length = points.length;
-        return predict(points, length);
+    public int[] predict(float[][] data) {
+        int length = data.length;
+        return predict(data, length);
     }
 
-    public int[] predict(int[][] points) {
-        float[][] floatPoints = iArr2FArr(points);
-        return predict(floatPoints);
+    public int[] predict(int[][] data) {
+        float[][] floatData = iArr2FArr(data);
+        return predict(floatData);
     }
 
     public static BufferedImage[] labels2BufImage(int[] labels, int w, int h, int k) {

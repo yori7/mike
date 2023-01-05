@@ -1,10 +1,16 @@
 package com.github.yorinana.mike;
 
+import com.github.yorinana.mike.clustering.Kmeans;
+// import com.github.yorinana.mike.clustering.Ward;
+import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 
@@ -12,20 +18,28 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-import static com.github.yorinana.mike.Filters.flatField;
-import static com.github.yorinana.mike.Filters.getRGB;
-import static com.github.yorinana.mike.Kmeans.labels2BufImage;
+import static com.github.yorinana.mike.filters.Filters.flatField;
+import static com.github.yorinana.mike.filters.Filters.getRGB;
+import static com.github.yorinana.mike.clustering.Kmeans.labels2BufImage;
 
 public class MikeController {
-    @FXML private Label statusText;
+    @FXML public HBox imageViewer;
+    @FXML private Label fileNameText;
     @FXML private VBox canvas;
     @FXML private ImageView imageView;
     @FXML private VBox canvas2;
     @FXML private ImageView imageView2;
+    @FXML private Button openButton;
+    @FXML private Button applyButton;
+    @FXML private Button saveButton;
+    @FXML private ProgressBar progressBar;
+    @FXML private Label statusText;
     private Image image;
     private Image image2;
-
 
     @FXML
     protected void onOpenButtonClick() {
@@ -52,7 +66,7 @@ public class MikeController {
         imageView2.fitHeightProperty().bind(canvas2.heightProperty());
         imageView2.setPreserveRatio(true);
 
-        statusText.setText(file.getName());
+        fileNameText.setText(file.getName());
     }
 
     @FXML
@@ -86,9 +100,84 @@ public class MikeController {
                     (int) image.getHeight(),
                     BufferedImage.TYPE_INT_RGB
             );
-            SwingFXUtils.fromFXImage(image, bufImage);
-            applyAction(bufImage);
-            imageView2.setImage(image2);
+            final ExecutorService executor = Executors.newSingleThreadExecutor();
+            Task<BufferedImage> bgApplyTask = new Task<>() {
+                @Override
+                protected BufferedImage call() {
+                    updateProgress(0, 100);
+                    SwingFXUtils.fromFXImage(image, bufImage);
+                    updateProgress(10, 100);
+                    applyAction(bufImage);
+                    updateProgress(100, 100);
+                    return null;
+                }
+
+                @Override
+                protected void running() {
+                    super.running();
+                    updateMessage("Processing");
+                }
+
+                @Override
+                protected void succeeded() {
+                    super.succeeded();
+                    updateMessage("Finish");
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(12000);
+                        updateMessage("Ready");
+                    } catch (InterruptedException e) {
+                        updateMessage("Ready");
+                        throw new RuntimeException(e);
+                    }
+
+                }
+
+                @Override
+                protected void failed() {
+                    super.failed();
+                    updateMessage("Failed");
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(12000);
+                        updateMessage("Ready");
+                    } catch (InterruptedException e) {
+                        updateMessage("Ready");
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                @Override
+                protected void cancelled() {
+                    super.cancelled();
+                    updateMessage("Interrupted");
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(12000);
+                        updateMessage("Ready");
+                    } catch (InterruptedException e) {
+                        updateMessage("Ready");
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                public void updateProgress(long l, long l1) {
+                    super.updateProgress(l, l1);
+                }
+
+                public void updateProgress(double v, double v1) {
+                    super.updateProgress(v, v1);
+                }
+            };
+            openButton.disableProperty().bind(bgApplyTask.runningProperty());
+            applyButton.disableProperty().bind(bgApplyTask.runningProperty());
+            saveButton.disableProperty().bind(bgApplyTask.runningProperty());
+            progressBar.progressProperty().bind(bgApplyTask.progressProperty());
+            progressBar.opacityProperty().set(1);
+            statusText.textProperty().bind(bgApplyTask.messageProperty());
+            bgApplyTask.setOnSucceeded(workerStateEvent -> {imageView2.setImage(image2); progressBar.opacityProperty().set(0);});
+            // bgApplyTask.setOnSucceeded(workerStateEvent -> progressBar.opacityProperty().set(0));
+            bgApplyTask.setOnFailed(workerStateEvent -> progressBar.opacityProperty().set(0));
+            bgApplyTask.setOnCancelled(workerStateEvent -> progressBar.opacityProperty().set(0));
+            executor.submit(bgApplyTask);
+            // imageView2.setImage(image2);
         }
     }
 
@@ -101,12 +190,13 @@ public class MikeController {
     protected void applyAction(BufferedImage img) {
         int w = img.getWidth();
         int h = img.getHeight();
-        int k = 5;
+        int k = 3;
         int maxIter = 30;
 
         BufferedImage flatImg = flatField(img);
 
         Kmeans model = new Kmeans(k, maxIter);
+        // Ward model = new Ward();
         int[] flatImgData = flatImg.getRGB(0, 0, flatImg.getWidth(), flatImg.getHeight(), null, 0, flatImg.getWidth());
         int[][] flatImgRGB = new int[flatImgData.length][3];
         for (int i = 0; i < flatImgData.length; i++) {

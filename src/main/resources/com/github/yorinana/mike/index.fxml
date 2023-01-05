@@ -1,34 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.HBox?>
-<VBox alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.github.yorinana.mike.MikeController">
-    <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-    </padding>
-    <HBox fx:id="imageViewer" alignment="CENTER" minHeight="0.0" minWidth="0.0" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS" spacing="5.0">
-        <VBox fx:id="canvas" alignment="CENTER" minHeight="0.0" minWidth="0.0" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
-            <ImageView fx:id="imageView" preserveRatio="true" />
-        </VBox>
-        <VBox fx:id="canvas2" alignment="CENTER" minHeight="0.0" minWidth="0.0" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS">
-            <ImageView fx:id="imageView2" preserveRatio="true" />
-        </VBox>
-    </HBox>
-    <VBox alignment="CENTER">
-        <Label fx:id="statusText" />
-    </VBox>
-    <HBox alignment="CENTER" spacing="5.0">
+<VBox alignment="CENTER" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.yorinana.mike.MikeController">
+    <VBox alignment="CENTER" minHeight="0.0" minWidth="0.0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
         <padding>
-            <Insets left="20" right="20" />
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
         </padding>
-        <Button alignment="BOTTOM_LEFT" onAction="#onOpenButtonClick" text="Open" textAlignment="CENTER" />
-        <Button alignment="BOTTOM_CENTER" onAction="#onApplyButtonClick" text="Apply" textAlignment="CENTER" />
-        <Button alignment="BOTTOM_RIGHT" onAction="#onSaveButtonClick" text="Save" textAlignment="CENTER" />
+        <HBox fx:id="imageViewer" alignment="CENTER" minHeight="0.0" minWidth="0.0" spacing="5.0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+            <VBox fx:id="canvas" alignment="CENTER" minHeight="0.0" minWidth="0.0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+                <ImageView fx:id="imageView" preserveRatio="true" />
+            </VBox>
+            <VBox fx:id="canvas2" alignment="CENTER" minHeight="0.0" minWidth="0.0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+                <ImageView fx:id="imageView2" preserveRatio="true" />
+            </VBox>
+        </HBox>
+        <VBox alignment="CENTER">
+            <Label fx:id="fileNameText" />
+        </VBox>
+        <HBox alignment="CENTER" spacing="5.0">
+            <padding>
+                <Insets left="20" right="20" />
+            </padding>
+            <Button fx:id="openButton" alignment="BOTTOM_LEFT" onAction="#onOpenButtonClick" stylesheets="@index.css" text="Open" textAlignment="CENTER" />
+            <Button fx:id="applyButton" alignment="BOTTOM_CENTER" onAction="#onApplyButtonClick" stylesheets="@index.css" text="Apply" textAlignment="CENTER" />
+            <Button fx:id="saveButton" alignment="BOTTOM_RIGHT" onAction="#onSaveButtonClick" stylesheets="@index.css" text="Save" textAlignment="CENTER" />
+        </HBox>
+    </VBox>
+    <HBox alignment="CENTER_RIGHT" maxHeight="20.0" minHeight="20.0" prefHeight="20.0" style="-fx-background-color: #606060;" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+        <padding>
+            <Insets left="10" right="10" />
+        </padding>
+        <ProgressBar fx:id="progressBar" opacity="0.0">
+         <HBox.margin>
+            <Insets left="10.0" right="10.0" />
+         </HBox.margin></ProgressBar>
+        <Label fx:id="statusText" style="-fx-font-weight: bold;" textAlignment="RIGHT" textFill="#ffffff">Ready</Label>
     </HBox>
 </VBox>

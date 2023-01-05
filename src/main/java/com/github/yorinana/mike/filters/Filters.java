@@ -1,4 +1,4 @@
-package com.github.yorinana.mike;
+package com.github.yorinana.mike.filters;
 
 import java.awt.image.BufferedImage;
 
@@ -169,5 +169,15 @@ public class Filters {
         int g = c >> 8 & 0xff;
         int b = c & 0xff;
         return new int[]{r, g, b};
+    }
+
+    public static BufferedImage medianFilter(BufferedImage img, int level) {
+        int w = img.getWidth();
+        int h = img.getHeight();
+        BufferedImage filteredImg = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+
+        // process
+
+        return filteredImg;
     }
 }
