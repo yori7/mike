@@ -6,8 +6,8 @@ import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -36,8 +36,9 @@ public class MikeController {
     @FXML private Button openButton;
     @FXML private Button applyButton;
     @FXML private Button saveButton;
-    @FXML private ProgressBar progressBar;
     @FXML private Label statusText;
+    @FXML private CheckBox flatFieldCheck;
+    @FXML private CheckBox thresholdingCheck;
     private Image image;
     private Image image2;
 
@@ -101,14 +102,11 @@ public class MikeController {
                     BufferedImage.TYPE_INT_RGB
             );
             final ExecutorService executor = Executors.newSingleThreadExecutor();
-            Task<BufferedImage> bgApplyTask = new Task<>() {
+            Task<Void> bgApplyTask = new Task<>() {
                 @Override
-                protected BufferedImage call() {
-                    updateProgress(0, 100);
+                protected Void call() {
                     SwingFXUtils.fromFXImage(image, bufImage);
-                    updateProgress(10, 100);
                     applyAction(bufImage);
-                    updateProgress(100, 100);
                     return null;
                 }
 
@@ -157,25 +155,12 @@ public class MikeController {
                         throw new RuntimeException(e);
                     }
                 }
-
-                public void updateProgress(long l, long l1) {
-                    super.updateProgress(l, l1);
-                }
-
-                public void updateProgress(double v, double v1) {
-                    super.updateProgress(v, v1);
-                }
             };
             openButton.disableProperty().bind(bgApplyTask.runningProperty());
             applyButton.disableProperty().bind(bgApplyTask.runningProperty());
             saveButton.disableProperty().bind(bgApplyTask.runningProperty());
-            progressBar.progressProperty().bind(bgApplyTask.progressProperty());
-            progressBar.opacityProperty().set(1);
             statusText.textProperty().bind(bgApplyTask.messageProperty());
-            bgApplyTask.setOnSucceeded(workerStateEvent -> {imageView2.setImage(image2); progressBar.opacityProperty().set(0);});
-            // bgApplyTask.setOnSucceeded(workerStateEvent -> progressBar.opacityProperty().set(0));
-            bgApplyTask.setOnFailed(workerStateEvent -> progressBar.opacityProperty().set(0));
-            bgApplyTask.setOnCancelled(workerStateEvent -> progressBar.opacityProperty().set(0));
+            bgApplyTask.setOnSucceeded(workerStateEvent -> imageView2.setImage(image2));
             executor.submit(bgApplyTask);
             // imageView2.setImage(image2);
         }
@@ -192,20 +177,25 @@ public class MikeController {
         int h = img.getHeight();
         int k = 3;
         int maxIter = 30;
-
-        BufferedImage flatImg = flatField(img);
-
-        Kmeans model = new Kmeans(k, maxIter);
-        // Ward model = new Ward();
-        int[] flatImgData = flatImg.getRGB(0, 0, flatImg.getWidth(), flatImg.getHeight(), null, 0, flatImg.getWidth());
-        int[][] flatImgRGB = new int[flatImgData.length][3];
-        for (int i = 0; i < flatImgData.length; i++) {
-            flatImgRGB[i] = getRGB(flatImgData[i]);
+        
+        if (flatFieldCheck.isSelected()) {
+            img = flatField(img);
         }
-        model.fit(flatImgRGB);
-        int[] labels = model.predict(flatImgRGB);
-        BufferedImage[] sepImg = labels2BufImage(labels, w, h, k);
-
-        image2 = SwingFXUtils.toFXImage(sepImg[0], null);
+        
+        if (thresholdingCheck.isSelected()) {
+            Kmeans model = new Kmeans(k, maxIter);
+            // Ward model = new Ward();
+            int[] flatImgData = img.getRGB(0, 0, img.getWidth(), img.getHeight(), null, 0, img.getWidth());
+            int[][] flatImgRGB = new int[flatImgData.length][3];
+            for (int i = 0; i < flatImgData.length; i++) {
+                flatImgRGB[i] = getRGB(flatImgData[i]);
+            }
+            model.fit(flatImgRGB);
+            int[] labels = model.predict(flatImgRGB);
+            BufferedImage[] sepImg = labels2BufImage(labels, w, h, k);
+            image2 = SwingFXUtils.toFXImage(sepImg[0], null);
+        } else {
+            image2 = SwingFXUtils.toFXImage(img, null);
+        }
     }
 }

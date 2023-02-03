@@ -3,6 +3,7 @@ package com.github.yorinana.mike;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -17,6 +18,9 @@ public class MikeApp extends Application {
                 Objects.requireNonNull(getClass().getResource("index.css")).toExternalForm()
         );
         stage.setTitle("Mike");
+        @SuppressWarnings("ConstantConditions")
+        Image icon = new Image(getClass().getResourceAsStream("icon.png"));
+        stage.getIcons().add(icon);
         stage.setScene(scene);
         stage.show();
     }

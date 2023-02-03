@@ -1,11 +1,17 @@
+.check-box {
+    -fx-text-fill: white;
+    -fx-font-family: "Arial Narrow";
+    -fx-font-weight: bold;
+}
+
 .button {
     -fx-text-fill: white;
     -fx-font-family: "Arial Narrow";
     -fx-font-weight: bold;
-    -fx-background-color: #ff5510;
+    -fx-background-color: #f06622;
 }
 
 .button:disabled {
     -fx-opacity: 0.8;
-    -fx-background-color: #ff5f1b;
+    -fx-background-color: #f26824;
 }
